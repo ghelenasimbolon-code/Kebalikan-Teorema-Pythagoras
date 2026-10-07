@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Pembelajaran Kebalikan Pythagoras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sideA: '#3b82f6', // Blue
+                        sideB: '#10b981', // Emerald Green
+                        sideC: '#f59e0b', // Amber
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Projector High Contrast Theme */
+        .projector-mode {
+            --bg-main: #ffffff;
+            --bg-card: #f8fafc;
+            --text-main: #000000;
+            --border-color: #000000;
+        }
+        .projector-mode body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        .projector-mode .card-box {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+        }
+        .projector-mode .text-muted {
+            color: #333333 !important;
+        }
+
+        /* SVG Label text stroke outline for maximum legibility */
+        .svg-text-outline {
+            paint-order: stroke fill;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen transition-colors duration-200 p-3 sm:p-6">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header & Theme Toggles -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-800/80 projector:bg-white p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white projector:text-black">
+                    Media Pembelajaran Kebalikan Pythagoras
+                </h1>
+                <p class="text-slate-400 projector:text-slate-700 text-sm sm:text-base mt-1 font-medium text-muted">
+                    Laboratorium Eksplorasi Panjang Sisi dan Jenis Segitiga
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button id="btnThemeToggle" onclick="toggleDarkMode()" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs sm:text-sm font-semibold transition flex items-center gap-2 border border-slate-600">
+                    <span id="themeIcon">🌙</span> <span id="themeLabel">Mode Terang</span>
+                </button>
+                <button id="btnProjectorToggle" onclick="toggleProjectorMode()" class="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-lg shadow-amber-600/20">
+                    📺 <span>Tampilan Proyektor</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Controls & Canvas Diagram (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Diagram Card -->
+                <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                            📐 Diagram Segitiga
+                        </h2>
+                        <div class="text-xs px-2.5 py-1 rounded-full bg-slate-700 text-slate-300 border border-slate-600 font-mono" id="triangleTypeBadge">
+                            Memproses...
+                        </div>
+                    </div>
+
+                    <!-- SVG Canvas Container -->
+                    <div class="w-full bg-slate-950/80 rounded-xl border border-slate-800 overflow-hidden relative flex items-center justify-center p-2 min-h-[320px] sm:min-h-[380px]">
+                        <svg id="triangleSvg" class="w-full h-[320px] sm:h-[380px] overflow-visible" viewBox="0 0 500 380" preserveAspectRatio="xMidYMid meet">
+                            <!-- Rendered dynamically in JS -->
+                        </svg>
+
+                        <!-- Error overlay for invalid triangle -->
+                        <div id="invalidTriangleMsg" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-10">
+                            <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl mb-3 font-bold">⚠️</div>
+                            <h3 class="text-lg font-bold text-rose-400 mb-1">Panjang ini tidak membentuk segitiga</h3>
+                            <p class="text-slate-400 text-sm max-w-xs">
+                                Syarat ketaksamaan segitiga tidak terpenuhi ($a + b > c$, $a + c > b$, dan $b + c > a$).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Presets -->
+                    <div class="mt-4 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400 mr-1">Uji Cepat Contoh:</span>
+                        <button onclick="setSides(3,4,5)" class="px-2.5 py-1 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition border border-slate-600">
+                            (3, 4, 5) Siku-siku
+                        </button>
+                        <button onclick="setSides(5,6,7)" class="px-2.5 py-1 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition border border-slate-600">
+                            (5, 6, 7) Lancip
+                        </button>
+                        <button onclick="setSides(4,5,7)" class="px-2.5 py-1 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition border border-slate-600">
+                            (4, 5, 7) Tumpul
+                        </button>
+                        <button onclick="setSides(2,3,7)" class="px-2.5 py-1 text-xs rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/80 text-xs font-medium transition">
+                            (2, 3, 7) Tidak Valid
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Side Length Controls -->
+                <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+                    <h3 class="text-base font-bold text-slate-100 flex items-center justify-between">
+                        <span>🎛️ Pengaturan Panjang Sisi</span>
+                        <span class="text-xs font-normal text-slate-400">Atur nilai 1 – 15</span>
+                    </h3>
+
+                    <!-- Side A -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <label for="rangeA" class="text-blue-400 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Sisi a (mendatar):
+                            </label>
+                            <input type="number" id="numA" min="1" max="15" value="3" onchange="updateFromNum('a')" class="w-16 px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-center text-blue-400 font-bold text-sm">
+                        </div>
+                        <input type="range" id="rangeA" min="1" max="15" step="0.5" value="3" oninput="updateFromRange('a')" class="w-full accent-blue-500 cursor-pointer">
+                    </div>
+
+                    <!-- Side B -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <label for="rangeB" class="text-emerald-400 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Sisi b (samping):
+                            </label>
+                            <input type="number" id="numB" min="1" max="15" value="4" onchange="updateFromNum('b')" class="w-16 px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-center text-emerald-400 font-bold text-sm">
+                        </div>
+                        <input type="range" id="rangeB" min="1" max="15" step="0.5" value="4" oninput="updateFromRange('b')" class="w-full accent-emerald-500 cursor-pointer">
+                    </div>
+
+                    <!-- Side C -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <label for="rangeC" class="text-amber-400 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Sisi c (seberang sudut):
+                            </label>
+                            <input type="number" id="numC" min="1" max="15" value="5" onchange="updateFromNum('c')" class="w-16 px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-center text-amber-400 font-bold text-sm">
+                        </div>
+                        <input type="range" id="rangeC" min="1" max="15" step="0.5" value="5" oninput="updateFromRange('c')" class="w-full accent-amber-500 cursor-pointer">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Live Calculations & Guided Questions (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Live Calculations Panel -->
+                <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        📊 Perhitungan Langsung
+                    </h2>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-700/60">
+                            <div class="text-xs text-slate-400 font-medium">a² (Kuadrat Sisi a)</div>
+                            <div id="valA2" class="text-xl font-extrabold text-blue-400 mt-1">9</div>
+                        </div>
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-700/60">
+                            <div class="text-xs text-slate-400 font-medium">b² (Kuadrat Sisi b)</div>
+                            <div id="valB2" class="text-xl font-extrabold text-emerald-400 mt-1">16</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 bg-slate-900/90 rounded-xl border border-slate-700 space-y-2">
+                        <div class="flex justify-between items-center text-sm font-semibold text-slate-300">
+                            <span>Jumlah Kuadrat (a² + b²):</span>
+                            <span id="valSum2" class="text-lg font-bold text-indigo-400">25</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-semibold text-slate-300">
+                            <span>Kuadrat Sisi c (c²):</span>
+                            <span id="valC2" class="text-lg font-bold text-amber-400">25</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+                            <span class="text-xs font-semibold text-slate-400">Hubungan Kuadrat:</span>
+                            <span id="valRelation" class="text-sm font-black px-2.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-emerald-500/30">
+                                a² + b² = c²
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-slate-400 font-medium">Sudut Terbesar θ (diapit a & b):</div>
+                            <div id="valAngle" class="text-2xl font-black text-slate-100 mt-0.5">90.0°</div>
+                        </div>
+                        <div id="badgeAngleType" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            Sudut Siku-siku
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guided Questions & Missions -->
+                <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        🎯 Pertanyaan Pemandu
+                    </h2>
+
+                    <!-- Mission Steps -->
+                    <div class="space-y-2.5 text-xs sm:text-sm">
+                        <div id="mission1" class="p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 flex items-start gap-2.5">
+                            <span class="text-base">1️⃣</span>
+                            <div class="flex-1">
+                                <span class="font-bold text-slate-200">Misi 1:</span>
+                                <p class="text-slate-300 mt-0.5">Temukan tiga panjang sisi yang membuat sudut terbesar tepat 90°.</p>
+                            </div>
+                        </div>
+
+                        <div id="mission2" class="p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 flex items-start gap-2.5">
+                            <span class="text-base">2️⃣</span>
+                            <div class="flex-1">
+                                <span class="font-bold text-slate-200">Misi 2:</span>
+                                <p class="text-slate-300 mt-0.5">Temukan tiga sisi yang membuat sudut terbesar lebih dari 90°.</p>
+                            </div>
+                        </div>
+
+                        <div id="mission3" class="p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 flex items-start gap-2.5">
+                            <span class="text-base">3️⃣</span>
+                            <div class="flex-1">
+                                <span class="font-bold text-slate-200">Misi 3:</span>
+                                <p class="text-slate-300 mt-0.5">Temukan tiga sisi yang membuat sudut terbesar kurang dari 90°.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Record Data Button -->
+                    <button onclick="recordCurrentData()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 text-sm">
+                        <span>📌</span> Cek & Catat ke Tabel
+                    </button>
+
+                    <!-- Discussion Prompt -->
+                    <div class="p-4 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs sm:text-sm space-y-1.5">
+                        <div class="font-bold flex items-center gap-1.5 text-amber-300">
+                            💡 Uji Dugaanmu (Diskusi Kelas):
+                        </div>
+                        <p class="leading-relaxed">
+                            Jika kuadrat sisi terpanjang sama dengan jumlah kuadrat dua sisi lainnya, berapa besar sudut terbesarnya? Apakah mungkin ada segitiga yang c² = a² + b² tetapi sudut terbesarnya bukan 90°?
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Data Recording Table -->
+        <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        📋 Tabel Pencatatan Data Eksplorasi
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Catatan hasil percobaan dan perbandingan nilai kuadrat sisi segitiga.</p>
+                </div>
+                <button onclick="clearTable()" class="px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/80 text-xs font-semibold transition self-start sm:self-auto">
+                    🗑️ Hapus Semua Data
+                </button>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-700">
+                <table class="w-full text-left text-xs sm:text-sm text-slate-200">
+                    <thead class="bg-slate-900 text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-700">
+                        <tr>
+                            <th class="px-3 py-3 text-center">No</th>
+                            <th class="px-3 py-3">Sisi a</th>
+                            <th class="px-3 py-3">Sisi b</th>
+                            <th class="px-3 py-3">Sisi c</th>
+                            <th class="px-3 py-3">a² + b²</th>
+                            <th class="px-3 py-3">c²</th>
+                            <th class="px-3 py-3 text-center">Hubungan</th>
+                            <th class="px-3 py-3">Sudut θ</th>
+                            <th class="px-3 py-3">Jenis Segitiga</th>
+                            <th class="px-3 py-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="divide-y divide-slate-800 bg-slate-900/40">
+                        <!-- Rows injected dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mystery Cards Section -->
+        <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    🃏 Kartu Misteri Segitiga
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">Tebak jenis segitiga berdasarkan tiga panjang sisinya sebelum membuka jawaban!</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Card 1 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col justify-between space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs font-bold text-indigo-400">Misteri #1</span>
+                        <span class="text-xs text-slate-400 font-mono">6, 8, 10</span>
+                    </div>
+                    <div id="mysteryAns1" class="hidden text-center py-2 text-xs font-bold text-emerald-400 bg-emerald-950/40 rounded-lg border border-emerald-800/60">
+                        a²+b² = 100, c² = 100<br><span class="text-sm text-emerald-300">Siku-siku (90.0°)</span>
+                    </div>
+                    <button onclick="toggleMystery('1')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-300 border border-slate-600 transition">
+                        <span id="btnMystery1">Buka Jawaban</span>
+                    </button>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col justify-between space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs font-bold text-indigo-400">Misteri #2</span>
+                        <span class="text-xs text-slate-400 font-mono">5, 7, 9</span>
+                    </div>
+                    <div id="mysteryAns2" class="hidden text-center py-2 text-xs font-bold text-amber-400 bg-amber-950/40 rounded-lg border border-amber-800/60">
+                        a²+b² = 74, c² = 81<br><span class="text-sm text-amber-300">Tumpul (> 90.0°)</span>
+                    </div>
+                    <button onclick="toggleMystery('2')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-300 border border-slate-600 transition">
+                        <span id="btnMystery2">Buka Jawaban</span>
+                    </button>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col justify-between space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs font-bold text-indigo-400">Misteri #3</span>
+                        <span class="text-xs text-slate-400 font-mono">6, 7, 8</span>
+                    </div>
+                    <div id="mysteryAns3" class="hidden text-center py-2 text-xs font-bold text-blue-400 bg-blue-950/40 rounded-lg border border-blue-800/60">
+                        a²+b² = 85, c² = 64<br><span class="text-sm text-blue-300">Lancip (< 90.0°)</span>
+                    </div>
+                    <button onclick="toggleMystery('3')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-300 border border-slate-600 transition">
+                        <span id="btnMystery3">Buka Jawaban</span>
+                    </button>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col justify-between space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs font-bold text-indigo-400">Misteri #4</span>
+                        <span class="text-xs text-slate-400 font-mono">8, 15, 17</span>
+                    </div>
+                    <div id="mysteryAns4" class="hidden text-center py-2 text-xs font-bold text-emerald-400 bg-emerald-950/40 rounded-lg border border-emerald-800/60">
+                        a²+b² = 289, c² = 289<br><span class="text-sm text-emerald-300">Siku-siku (90.0°)</span>
+                    </div>
+                    <button onclick="toggleMystery('4')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-300 border border-slate-600 transition">
+                        <span id="btnMystery4">Buka Jawaban</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Section -->
+        <div class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/60 shadow-xl card-box space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        👨‍🏫 Bagian Guru & Rangkuman Materi
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Fasilitasi diskusi kelas untuk menyimpulkan Kebalikan Teorema Pythagoras.</p>
+                </div>
+                <button onclick="toggleConclusion()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition">
+                    <span id="btnConclusionLabel">🔓 Buka Kesimpulan Teorema</span>
+                </button>
+            </div>
+
+            <!-- Hidden Conclusion Box -->
+            <div id="teacherConclusion" class="hidden p-5 rounded-xl bg-purple-950/40 border border-purple-800/80 text-purple-100 space-y-3">
+                <h3 class="font-extrabold text-base text-purple-300 flex items-center gap-2">
+                    📌 Kebalikan Teorema Pythagoras (Pythagorean Theorem Converse)
+                </h3>
+                <p class="text-xs sm:text-sm leading-relaxed text-purple-200">
+                    Misalkan $a$, $b$, dan $c$ adalah panjang sisi-sisi suatu segitiga dengan $c$ sebagai sisi terpanjang (atau sisi di hadapan sudut $\theta$):
+                </p>
+                <ul class="list-disc list-inside text-xs sm:text-sm space-y-1.5 text-purple-200 pl-2">
+                    <li>Jika <strong class="text-emerald-400">a² + b² = c²</strong>, maka segitiga tersebut adalah <strong class="text-emerald-400">Segitiga Siku-siku</strong> (sudut $\theta = 90^\circ$).</li>
+                    <li>Jika <strong class="text-amber-400">a² + b² &lt; c²</strong>, maka segitiga tersebut adalah <strong class="text-amber-400">Segitiga Tumpul</strong> (sudut $\theta &gt; 90^\circ$).</li>
+                    <li>Jika <strong class="text-blue-400">a² + b² &gt; c²</strong>, maka segitiga tersebut adalah <strong class="text-blue-400">Segitiga Lancip</strong> (sudut $\theta &lt; 90^\circ$).</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State variables
+        let sideA = 3.0;
+        let sideB = 4.0;
+        let sideC = 5.0;
+        let recordedData = [];
+        let recordCounter = 0;
+
+        // Color definitions matching CSS
+        const COLOR_A = '#3b82f6'; // Blue
+        const COLOR_B = '#10b981'; // Emerald
+        const COLOR_C = '#f59e0b'; // Amber
+
+        // Theme modes
+        let isDarkMode = true;
+        let isProjectorMode = false;
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateApp();
+        });
+
+        // Set sides programmatically
+        function setSides(a, b, c) {
+            sideA = parseFloat(a);
+            sideB = parseFloat(b);
+            sideC = parseFloat(c);
+            
+            document.getElementById('rangeA').value = sideA;
+            document.getElementById('numA').value = sideA;
+            document.getElementById('rangeB').value = sideB;
+            document.getElementById('numB').value = sideB;
+            document.getElementById('rangeC').value = sideC;
+            document.getElementById('numC').value = sideC;
+
+            updateApp();
+        }
+
+        // Input sync handlers
+        function updateFromRange(side) {
+            if (side === 'a') sideA = parseFloat(document.getElementById('rangeA').value);
+            if (side === 'b') sideB = parseFloat(document.getElementById('rangeB').value);
+            if (side === 'c') sideC = parseFloat(document.getElementById('rangeC').value);
+
+            document.getElementById('numA').value = sideA;
+            document.getElementById('numB').value = sideB;
+            document.getElementById('numC').value = sideC;
+
+            updateApp();
+        }
+
+        function updateFromNum(side) {
+            let valA = parseFloat(document.getElementById('numA').value) || 1;
+            let valB = parseFloat(document.getElementById('numB').value) || 1;
+            let valC = parseFloat(document.getElementById('numC').value) || 1;
+
+            sideA = Math.max(1, Math.min(15, valA));
+            sideB = Math.max(1, Math.min(15, valB));
+            sideC = Math.max(1, Math.min(15, valC));
+
+            document.getElementById('rangeA').value = sideA;
+            document.getElementById('rangeB').value = sideB;
+            document.getElementById('rangeC').value = sideC;
+
+            updateApp();
+        }
+
+        // Main Calculation and Drawing Controller
+        function updateApp() {
+            const a = sideA;
+            const b = sideB;
+            const c = sideC;
+
+            // Check Triangle Inequality: a+b > c and a+c > b and b+c > a
+            const isValid = (a + b > c) && (a + c > b) && (b + c > a);
+
+            const msgEl = document.getElementById('invalidTriangleMsg');
+            const svgEl = document.getElementById('triangleSvg');
+
+            if (!isValid) {
+                msgEl.classList.remove('hidden');
+                svgEl.style.opacity = '0.15';
+                
+                // Update live calculations to show invalid
+                document.getElementById('valA2').textContent = (a*a).toFixed(2).replace(/\.00$/, '');
+                document.getElementById('valB2').textContent = (b*b).toFixed(2).replace(/\.00$/, '');
+                document.getElementById('valSum2').textContent = (a*a + b*b).toFixed(2).replace(/\.00$/, '');
+                document.getElementById('valC2').textContent = (c*c).toFixed(2).replace(/\.00$/, '');
+                document.getElementById('valRelation').textContent = "Tidak Membentuk Segitiga";
+                document.getElementById('valRelation').className = "text-xs font-bold px-2 py-0.5 rounded bg-rose-900/60 text-rose-300 border border-rose-700";
+                document.getElementById('valAngle').textContent = "-";
+                document.getElementById('badgeAngleType').textContent = "Bukan Segitiga";
+                document.getElementById('badgeAngleType').className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-950/60 text-rose-400 border border-rose-800";
+                document.getElementById('triangleTypeBadge').textContent = "⚠️ Tidak Valid";
+                document.getElementById('triangleTypeBadge').className = "text-xs px-2.5 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-800 font-bold";
+                return;
+            }
+
+            msgEl.classList.add('hidden');
+            svgEl.style.opacity = '1';
+
+            // Calculate Angle θ (in radians & degrees) between side A and side B (opposite to side C)
+            // Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(θ) => cos(θ) = (a^2 + b^2 - c^2) / (2ab)
+            const cosTheta = (a*a + b*b - c*c) / (2 * a * b);
+            const thetaRad = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+            const thetaDeg = thetaRad * (180 / Math.PI);
+
+            // Calculations display
+            const a2 = a * a;
+            const b2 = b * b;
+            const sum2 = a2 + b2;
+            const c2 = c * c;
+
+            document.getElementById('valA2').textContent = Number.isInteger(a2) ? a2 : a2.toFixed(2);
+            document.getElementById('valB2').textContent = Number.isInteger(b2) ? b2 : b2.toFixed(2);
+            document.getElementById('valSum2').textContent = Number.isInteger(sum2) ? sum2 : sum2.toFixed(2);
+            document.getElementById('valC2').textContent = Number.isInteger(c2) ? c2 : c2.toFixed(2);
+
+            const diff = sum2 - c2;
+            let relText = "";
+            let relClass = "";
+            let typeBadgeText = "";
+            let typeBadgeClass = "";
+
+            if (Math.abs(diff) < 1e-5) {
+                relText = "a² + b² = c²";
+                relClass = "text-sm font-black px-2.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40";
+                typeBadgeText = "Segitiga Siku-siku (90.0°)";
+                typeBadgeClass = "text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+            } else if (sum2 > c2) {
+                relText = "a² + b² > c²";
+                relClass = "text-sm font-black px-2.5 py-0.5 rounded bg-blue-950/80 text-blue-400 border border-blue-500/40";
+                typeBadgeText = "Segitiga Lancip (< 90.0°)";
+                typeBadgeClass = "text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/40";
+            } else {
+                relText = "a² + b² < c²";
+                relClass = "text-sm font-black px-2.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-500/40";
+                typeBadgeText = "Segitiga Tumpul (> 90.0°)";
+                typeBadgeClass = "text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40";
+            }
+
+            document.getElementById('valRelation').textContent = relText;
+            document.getElementById('valRelation').className = relClass;
+            document.getElementById('valAngle').textContent = thetaDeg.toFixed(1) + "°";
+            document.getElementById('badgeAngleType').textContent = typeBadgeText;
+            document.getElementById('badgeAngleType').className = typeBadgeClass;
+
+            document.getElementById('triangleTypeBadge').textContent = typeBadgeText.split(' ')[0] + ' ' + typeBadgeText.split(' ')[1];
+            document.getElementById('triangleTypeBadge').className = typeBadgeClass;
+
+            // Render SVG Diagram
+            renderSvgTriangle(a, b, c, thetaRad, thetaDeg);
+        }
+
+        // SVG Triangle Rendering Engine
+        function renderSvgTriangle(a, b, c, thetaRad, thetaDeg) {
+            const svg = document.getElementById('triangleSvg');
+            
+            // Canvas Viewbox dimensions
+            const viewBoxW = 500;
+            const viewBoxH = 380;
+            const padding = 60; // Padding around the triangle to avoid text clipping
+
+            // Math Coordinate calculations:
+            // Vertex AB (where side a and side b meet, angle theta): (0, 0)
+            // Vertex A (end of horizontal side a): (a, 0)
+            // Vertex B (end of side b): (b * cos(theta), b * sin(theta))
+            const bx = b * Math.cos(thetaRad);
+            const by = b * Math.sin(thetaRad);
+
+            const vAB_math = { x: 0, y: 0 };
+            const vA_math  = { x: a, y: 0 };
+            const vB_math  = { x: bx, y: by };
+
+            // Bounding box in math space
+            const xMin = Math.min(0, a, bx);
+            const xMax = Math.max(0, a, bx);
+            const yMin = Math.min(0, 0, by); // 0
+            const yMax = Math.max(0, 0, by); // by
+
+            const triW = xMax - xMin;
+            const triH = yMax - yMin;
+
+            // Available drawing space
+            const drawW = viewBoxW - 2 * padding;
+            const drawH = viewBoxH - 2 * padding;
+
+            // Auto Scale factor
+            const scale = Math.min(drawW / (triW || 1), drawH / (triH || 1));
+
+            // Bounding box center in math space
+            const centerX_math = (xMin + xMax) / 2;
+            const centerY_math = (yMin + yMax) / 2;
+
+            // Mapping math (x,y) to SVG screen (X,Y)
+            // Math Y grows up, SVG Y grows down!
+            function toSvgCoords(p) {
+                return {
+                    x: (viewBoxW / 2) + (p.x - centerX_math) * scale,
+                    y: (viewBoxH / 2) - (p.y - centerY_math) * scale
+                };
+            }
+
+            const pAB = toSvgCoords(vAB_math);
+            const pA  = toSvgCoords(vA_math);
+            const pB  = toSvgCoords(vB_math);
+
+            // Determine stroke theme colors
+            const textBgColor = isProjectorMode ? '#ffffff' : (isDarkMode ? '#020617' : '#ffffff');
+            const strokeOutline = isProjectorMode ? '#ffffff' : '#0f172a';
+
+            // Build SVG Inner Elements
+            let svgContent = ``;
+
+            // 1. Angle Arc at Vertex AB
+            const arcRadius = Math.max(25, Math.min(45, scale * 0.8));
+            const isRightAngle = Math.abs(thetaDeg - 90) < 0.1;
+
+            if (isRightAngle) {
+                // Draw square right angle symbol
+                const sz = 20;
+                // Side a direction is +x (1, 0), Side b direction is (0, -1 in SVG)
+                const squarePath = `M ${pAB.x + sz} ${pAB.y} L ${pAB.x + sz} ${pAB.y - sz} L ${pAB.x} ${pAB.y - sz}`;
+                svgContent += `<path d="${squarePath}" fill="none" stroke="#ef4444" stroke-width="2.5" />`;
+            } else {
+                // Arc from angle 0 to -thetaRad (since SVG Y is inverted)
+                const startX = pAB.x + arcRadius;
+                const startY = pAB.y;
+                const endX = pAB.x + arcRadius * Math.cos(thetaRad);
+                const endY = pAB.y - arcRadius * Math.sin(thetaRad);
+                const largeArc = thetaRad > Math.PI ? 1 : 0;
+
+                svgContent += `<path d="M ${pAB.x} ${pAB.y} L ${startX} ${startY} A ${arcRadius} ${arcRadius} 0 ${largeArc} 0 ${endX} ${endY} Z" 
+                                     fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2" stroke-dasharray="3,3" />`;
+            }
+
+            // Angle degree label text near arc
+            const angleLabelRad = thetaRad / 2;
+            const angleLabelDist = arcRadius + 22;
+            const angleLabelX = pAB.x + angleLabelDist * Math.cos(angleLabelRad);
+            const angleLabelY = pAB.y - angleLabelDist * Math.sin(angleLabelRad);
+
+            svgContent += `
+                <text x="${angleLabelX}" y="${angleLabelY}" 
+                      fill="#ef4444" font-weight="800" font-size="13" 
+                      text-anchor="middle" dominant-baseline="central"
+                      class="svg-text-outline" stroke="${strokeOutline}" stroke-width="3">
+                    θ = ${thetaDeg.toFixed(1)}°
+                </text>
+            `;
+
+            // 2. Triangle Edge Lines
+            // Side A (pAB to pA) - Blue
+            svgContent += `<line x1="${pAB.x}" y1="${pAB.y}" x2="${pA.x}" y2="${pA.y}" stroke="${COLOR_A}" stroke-width="5" stroke-linecap="round" />`;
+            
+            // Side B (pAB to pB) - Emerald Green
+            svgContent += `<line x1="${pAB.x}" y1="${pAB.y}" x2="${pB.x}" y2="${pB.y}" stroke="${COLOR_B}" stroke-width="5" stroke-linecap="round" />`;
+
+            // Side C (pA to pB) - Amber
+            svgContent += `<line x1="${pA.x}" y1="${pA.y}" x2="${pB.x}" y2="${pB.y}" stroke="${COLOR_C}" stroke-width="5" stroke-linecap="round" />`;
+
+            // 3. Vertex Nodes
+            [pAB, pA, pB].forEach(p => {
+                svgContent += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#ffffff" stroke="#0f172a" stroke-width="2" />`;
+            });
+
+            // 4. Labels for Sides a, b, c (Positioned Outside Triangle)
+            // Label Side A (Bottom horizontal edge): Offset downwards
+            const midA = { x: (pAB.x + pA.x) / 2, y: (pAB.y + pA.y) / 2 + 24 };
+            svgContent += `
+                <text x="${midA.x}" y="${midA.y}" 
+                      fill="${COLOR_A}" font-weight="800" font-size="15" 
+                      text-anchor="middle" dominant-baseline="central"
+                      class="svg-text-outline" stroke="${strokeOutline}" stroke-width="4">
+                    a = ${a}
+                </text>
+            `;
+
+            // Label Side B: Midpoint of (pAB to pB), offset outward along normal
+            const midB_x = (pAB.x + pB.x) / 2;
+            const midB_y = (pAB.y + pB.y) / 2;
+            // Outward normal for vector (bx, by) leaning left or right
+            const normB_x = -Math.sin(thetaRad);
+            const normB_y = -Math.cos(thetaRad); // SVG Y offset
+            const offsetDistB = 25;
+            const labelB_x = midB_x + normB_x * offsetDistB;
+            const labelB_y = midB_y + normB_y * offsetDistB;
+
+            svgContent += `
+                <text x="${labelB_x}" y="${labelB_y}" 
+                      fill="${COLOR_B}" font-weight="800" font-size="15" 
+                      text-anchor="middle" dominant-baseline="central"
+                      class="svg-text-outline" stroke="${strokeOutline}" stroke-width="4">
+                    b = ${b}
+                </text>
+            `;
+
+            // Label Side C: Midpoint of (pA to pB), offset outwards
+            const midC_x = (pA.x + pB.x) / 2;
+            const midC_y = (pA.y + pB.y) / 2;
+            // Vector from vertex AB to midpoint C points outwards
+            const dirC_x = midC_x - pAB.x;
+            const dirC_y = midC_y - pAB.y;
+            const lenC = Math.hypot(dirC_x, dirC_y) || 1;
+            const offsetDistC = 22;
+            const labelC_x = midC_x + (dirC_x / lenC) * offsetDistC;
+            const labelC_y = midC_y + (dirC_y / lenC) * offsetDistC;
+
+            svgContent += `
+                <text x="${labelC_x}" y="${labelC_y}" 
+                      fill="${COLOR_C}" font-weight="800" font-size="15" 
+                      text-anchor="middle" dominant-baseline="central"
+                      class="svg-text-outline" stroke="${strokeOutline}" stroke-width="4">
+                    c = ${c}
+                </text>
+            `;
+
+            svg.innerHTML = svgContent;
+        }
+
+        // Data Table Recording
+        function recordCurrentData() {
+            const a = sideA;
+            const b = sideB;
+            const c = sideC;
+
+            const isValid = (a + b > c) && (a + c > b) && (b + c > a);
+            if (!isValid) {
+                alert("Sisi " + a + ", " + b + ", " + c + " tidak membentuk segitiga valid!");
+                return;
+            }
+
+            const cosTheta = (a*a + b*b - c*c) / (2 * a * b);
+            const thetaRad = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+            const thetaDeg = thetaRad * (180 / Math.PI);
+
+            const a2 = a * a;
+            const b2 = b * b;
+            const sum2 = a2 + b2;
+            const c2 = c * c;
+
+            let relSymbol = "=";
+            let typeName = "Siku-siku";
+            let badgeStyle = "bg-emerald-950/60 text-emerald-400 border-emerald-800";
+
+            if (Math.abs(sum2 - c2) < 1e-5) {
+                relSymbol = "=";
+                typeName = "Siku-siku";
+                badgeStyle = "bg-emerald-950/60 text-emerald-400 border-emerald-800";
+            } else if (sum2 > c2) {
+                relSymbol = ">";
+                typeName = "Lancip";
+                badgeStyle = "bg-blue-950/60 text-blue-400 border-blue-800";
+            } else {
+                relSymbol = "<";
+                typeName = "Tumpul";
+                badgeStyle = "bg-amber-950/60 text-amber-400 border-amber-800";
+            }
+
+            recordCounter++;
+            const item = {
+                id: recordCounter,
+                a: a,
+                b: b,
+                c: c,
+                sum2: Number.isInteger(sum2) ? sum2 : sum2.toFixed(2),
+                c2: Number.isInteger(c2) ? c2 : c2.toFixed(2),
+                rel: relSymbol,
+                angle: thetaDeg.toFixed(1) + "°",
+                type: typeName,
+                style: badgeStyle
+            };
+
+            recordedData.push(item);
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('dataTableBody');
+            if (recordedData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-6 text-slate-500 italic">
+                            Belum ada data dicatat. Klik tombol "Cek & Catat ke Tabel" di atas.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            recordedData.forEach((row, index) => {
+                html += `
+                    <tr class="hover:bg-slate-800/60 transition">
+                        <td class="px-3 py-2.5 text-center font-bold text-slate-400">${index + 1}</td>
+                        <td class="px-3 py-2.5 font-bold text-blue-400">${row.a}</td>
+                        <td class="px-3 py-2.5 font-bold text-emerald-400">${row.b}</td>
+                        <td class="px-3 py-2.5 font-bold text-amber-400">${row.c}</td>
+                        <td class="px-3 py-2.5 font-mono text-slate-200">${row.sum2}</td>
+                        <td class="px-3 py-2.5 font-mono text-slate-200">${row.c2}</td>
+                        <td class="px-3 py-2.5 text-center font-extrabold text-indigo-400">${row.rel}</td>
+                        <td class="px-3 py-2.5 font-mono text-slate-200">${row.angle}</td>
+                        <td class="px-3 py-2.5">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${row.style}">
+                                ${row.type}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2.5 text-center">
+                            <button onclick="deleteRecord(${row.id})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-0.5 text-xs rounded hover:bg-rose-950/40 transition">
+                                ✕
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function deleteRecord(id) {
+            recordedData = recordedData.filter(item => item.id !== id);
+            renderTable();
+        }
+
+        function clearTable() {
+            recordedData = [];
+            renderTable();
+        }
+
+        // Mystery Card toggles
+        function toggleMystery(cardNum) {
+            const ansEl = document.getElementById('mysteryAns' + cardNum);
+            const btnEl = document.getElementById('btnMystery' + cardNum);
+
+            if (ansEl.classList.contains('hidden')) {
+                ansEl.classList.remove('hidden');
+                btnEl.textContent = 'Sembunyikan';
+            } else {
+                ansEl.classList.add('hidden');
+                btnEl.textContent = 'Buka Jawaban';
+            }
+        }
+
+        // Teacher Conclusion toggle
+        function toggleConclusion() {
+            const concEl = document.getElementById('teacherConclusion');
+            const btnLabel = document.getElementById('btnConclusionLabel');
+
+            if (concEl.classList.contains('hidden')) {
+                concEl.classList.remove('hidden');
+                btnLabel.textContent = '🔒 Sembunyikan Kesimpulan';
+            } else {
+                concEl.classList.add('hidden');
+                btnLabel.textContent = '🔓 Buka Kesimpulan Teorema';
+            }
+        }
+
+        // Theme Switchers
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            isDarkMode = !isDarkMode;
+
+            if (isDarkMode) {
+                html.classList.add('dark');
+                document.getElementById('themeIcon').textContent = '🌙';
+                document.getElementById('themeLabel').textContent = 'Mode Terang';
+            } else {
+                html.classList.remove('dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+                document.getElementById('themeLabel').textContent = 'Mode Gelap';
+            }
+            updateApp();
+        }
+
+        function toggleProjectorMode() {
+            isProjectorMode = !isProjectorMode;
+            const body = document.body;
+
+            if (isProjectorMode) {
+                body.classList.add('projector-mode');
+            } else {
+                body.classList.remove('projector-mode');
+            }
+            updateApp();
+        }
+    </script>
+</body>
+</html>
